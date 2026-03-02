@@ -1,0 +1,73 @@
+{
+  "_metadata": {
+    "last_updated": "2026-02-01",
+    "source": "NVD / GitHub Advisory Database",
+    "note": "Bundled snapshot for offline use. Run 'repro update-data' for latest."
+  },
+  "vulnerabilities": [
+    {
+      "package": "requests",
+      "affected_versions": "<2.31.0",
+      "cve": "CVE-2023-32681",
+      "severity": "medium",
+      "description": "Unintended leak of Proxy-Authorization header to destination servers on redirects.",
+      "fixed_in": "2.31.0"
+    },
+    {
+      "package": "numpy",
+      "affected_versions": "<1.22.0",
+      "cve": "CVE-2021-41496",
+      "severity": "medium",
+      "description": "Buffer overflow in numpy.resize() allows denial of service.",
+      "fixed_in": "1.22.0"
+    },
+    {
+      "package": "pillow",
+      "affected_versions": "<10.0.1",
+      "cve": "CVE-2023-44271",
+      "severity": "high",
+      "description": "Uncontrolled resource consumption when processing crafted images.",
+      "fixed_in": "10.0.1"
+    },
+    {
+      "package": "pytorch",
+      "affected_versions": "<2.0.1",
+      "cve": "CVE-2023-45483",
+      "severity": "high",
+      "description": "Remote code execution via crafted model files using torch.load().",
+      "fixed_in": "2.0.1"
+    },
+    {
+      "package": "tensorflow",
+      "affected_versions": "<2.14.1",
+      "cve": "CVE-2023-25801",
+      "severity": "critical",
+      "description": "Heap buffer overflow in tf.raw_ops.QuantizeAndDequantizeV4Grad.",
+      "fixed_in": "2.14.1"
+    },
+    {
+      "package": "flask",
+      "affected_versions": "<2.3.2",
+      "cve": "CVE-2023-30861",
+      "severity": "high",
+      "description": "Session cookie may be sent to wrong client due to caching issue.",
+      "fixed_in": "2.3.2"
+    },
+    {
+      "package": "scipy",
+      "affected_versions": "<1.10.0",
+      "cve": "CVE-2023-25399",
+      "severity": "medium",
+      "description": "Memory leak in scipy.optimize allows denial of service.",
+      "fixed_in": "1.10.0"
+    },
+    {
+      "package": "cryptography",
+      "affected_versions": "<41.0.4",
+      "cve": "CVE-2023-38325",
+      "severity": "high",
+      "description": "NULL dereference when parsing PKCS7 certificates.",
+      "fixed_in": "41.0.4"
+    }
+  ]
+}

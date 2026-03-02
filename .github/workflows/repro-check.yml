@@ -1,0 +1,19 @@
+name: Repro Check
+on: [push, pull_request]
+jobs:
+  repro-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install repro
+        run: pip install repro-lock
+      - name: Update data files
+        run: repro update-data --auto
+      - name: Feasibility check
+        run: repro feasibility repro.lock --json --strict
+      - name: Environment check
+        run: repro check repro.lock --ci

@@ -1,0 +1,110 @@
+{
+  "nextflow_rnaseq": {
+    "min_ram_gb": 32,
+    "recommended_ram_gb": 64,
+    "min_cores": 8,
+    "recommended_cores": 16,
+    "requires_gpu": false,
+    "typical_disk_gb": 200,
+    "notes": "STAR alignment requires 32GB minimum for human genome"
+  },
+  "nextflow_sarek": {
+    "min_ram_gb": 32,
+    "recommended_ram_gb": 128,
+    "min_cores": 8,
+    "recommended_cores": 32,
+    "requires_gpu": false,
+    "typical_disk_gb": 500,
+    "notes": "Whole-genome variant calling pipeline. GATK HaplotypeCaller is memory-intensive."
+  },
+  "snakemake_chipseq": {
+    "min_ram_gb": 16,
+    "recommended_ram_gb": 32,
+    "min_cores": 4,
+    "recommended_cores": 16,
+    "requires_gpu": false,
+    "typical_disk_gb": 100,
+    "notes": "ChIP-seq analysis with bowtie2 + MACS2"
+  },
+  "deepvariant": {
+    "min_ram_gb": 16,
+    "recommended_ram_gb": 64,
+    "min_cores": 8,
+    "recommended_cores": 32,
+    "requires_gpu": true,
+    "gpu_fallback": false,
+    "typical_disk_gb": 200,
+    "notes": "No CPU-only mode. GPU required."
+  },
+  "scrna_seurat": {
+    "min_ram_gb": 32,
+    "recommended_ram_gb": 128,
+    "min_cores": 4,
+    "recommended_cores": 16,
+    "requires_gpu": false,
+    "typical_disk_gb": 50,
+    "notes": "Single-cell RNA-seq. RAM requirement scales with cell count."
+  },
+  "ml_training": {
+    "min_ram_gb": 16,
+    "recommended_ram_gb": 64,
+    "min_cores": 4,
+    "recommended_cores": 16,
+    "requires_gpu": true,
+    "gpu_fallback": true,
+    "typical_disk_gb": 100,
+    "notes": "General ML training. CPU fallback available but 10-100x slower."
+  },
+  "genome_assembly": {
+    "min_ram_gb": 64,
+    "recommended_ram_gb": 256,
+    "min_cores": 16,
+    "recommended_cores": 64,
+    "requires_gpu": false,
+    "typical_disk_gb": 1000,
+    "notes": "De novo genome assembly with SPAdes/Flye. Very memory-intensive."
+  },
+  "cloud_recommendations": {
+    "gpu_pipeline": {
+      "aws": {"instance": "p3.2xlarge", "price_per_hr": 3.06},
+      "gcp": {"instance": "n1-standard-32+T4", "price_per_hr": 1.80},
+      "azure": {"instance": "NC6s_v3", "price_per_hr": 3.06}
+    },
+    "large_memory_pipeline": {
+      "aws": {"instance": "r5.4xlarge", "price_per_hr": 1.008},
+      "gcp": {"instance": "m1-ultramem-40", "price_per_hr": 6.30},
+      "azure": {"instance": "Standard_M32ms", "price_per_hr": 8.68}
+    },
+    "standard_pipeline": {
+      "aws": {"instance": "c5.4xlarge", "price_per_hr": 0.68},
+      "gcp": {"instance": "c2-standard-16", "price_per_hr": 0.67},
+      "azure": {"instance": "Standard_F16s_v2", "price_per_hr": 0.68}
+    }
+  },
+  "free_platforms": [
+    {
+      "name": "Terra (Broad Institute)",
+      "url": "https://terra.bio",
+      "suitable_for": ["gatk", "wdl", "cromwell"],
+      "notes": "Free for GATK pipelines, integrates with AnVIL"
+    },
+    {
+      "name": "Galaxy Europe",
+      "url": "https://usegalaxy.eu",
+      "suitable_for": ["galaxy"],
+      "notes": "Free, large tool library"
+    },
+    {
+      "name": "Nextflow Tower (Seqera)",
+      "url": "https://tower.nf",
+      "suitable_for": ["nextflow"],
+      "notes": "Free community tier"
+    },
+    {
+      "name": "Google Colab",
+      "url": "https://colab.research.google.com",
+      "suitable_for": ["ml_training", "pytorch", "tensorflow"],
+      "notes": "Free GPU tier (T4), session time limits"
+    }
+  ]
+}

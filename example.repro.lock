@@ -1,0 +1,212 @@
+{
+  "repro_schema_version": "1.0",
+  "created_at": "2026-03-02T14:30:00",
+  "repro_version": "0.1.0",
+  "pipeline_type": "nextflow",
+  "system": {
+    "os": "Linux",
+    "os_family": "debian",
+    "kernel": "5.15.0",
+    "arch": "x86_64",
+    "hostname": "lab-server-01",
+    "cpus": 32,
+    "ram_gb": 128,
+    "disk_free_gb": 940,
+    "wsl": false,
+    "arm": false
+  },
+  "languages": {
+    "python": {
+      "found": true,
+      "version": "3.11.4",
+      "path": "/usr/bin/python3",
+      "real_path": "/usr/bin/python3.11"
+    },
+    "R": {
+      "found": true,
+      "version": "4.3.1",
+      "path": "/usr/bin/R",
+      "real_path": "/usr/bin/R"
+    },
+    "julia": {
+      "found": true,
+      "version": "1.9.2",
+      "path": "/usr/bin/julia",
+      "real_path": "/usr/bin/julia"
+    },
+    "java": {
+      "found": true,
+      "version": "openjdk 17.0.8",
+      "path": "/usr/bin/java",
+      "real_path": "/usr/bin/java"
+    },
+    "groovy": {
+      "found": true,
+      "version": "4.0.13",
+      "path": "/usr/bin/groovy",
+      "real_path": "/usr/bin/groovy"
+    },
+    "bash": {
+      "found": true,
+      "version": "5.2.15",
+      "path": "/usr/bin/bash",
+      "real_path": "/usr/bin/bash"
+    },
+    "perl": {
+      "found": true,
+      "version": "5.36.0",
+      "path": "/usr/bin/perl",
+      "real_path": "/usr/bin/perl"
+    }
+  },
+  "package_managers": {
+    "conda": {
+      "binary": "mamba",
+      "version": "1.5.1",
+      "env_name": "nf-core",
+      "packages": {
+        "numpy": "1.24.0",
+        "pandas": "2.0.1",
+        "scipy": "1.11.1"
+      },
+      "conflicts": []
+    },
+    "pip": {
+      "requests": "2.31.0",
+      "torch": "2.0.1",
+      "transformers": "4.30.0"
+    },
+    "R_packages": {
+      "ggplot2": "3.4.3",
+      "DESeq2": "1.40.0",
+      "Seurat": "5.0.0"
+    },
+    "julia_packages": {
+      "BioSequences": "3.1.3"
+    },
+    "npm": {},
+    "cargo": {}
+  },
+  "tools": {
+    "bioinformatics": {
+      "nextflow": {
+        "found": true,
+        "version": "23.04.1",
+        "path": "/usr/bin/nextflow",
+        "real_path": "/usr/bin/nextflow"
+      },
+      "samtools": {
+        "found": true,
+        "version": "1.17",
+        "path": "/usr/bin/samtools",
+        "real_path": "/opt/samtools-1.17/bin/samtools"
+      },
+      "STAR": {
+        "found": true,
+        "version": "2.7.10b",
+        "path": "/usr/bin/STAR",
+        "real_path": "/usr/bin/STAR"
+      },
+      "fastqc": {
+        "found": true,
+        "version": "0.12.1",
+        "path": "/usr/bin/fastqc",
+        "real_path": "/opt/FastQC/fastqc"
+      },
+      "deepvariant": {
+        "found": false,
+        "version": null,
+        "path": null
+      }
+    },
+    "ml": {
+      "cuda": {
+        "found": true,
+        "version": "12.1"
+      },
+      "cudnn": {
+        "found": true,
+        "version": "8.9.2"
+      },
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA A100",
+          "memory_gb": 80,
+          "driver": "525.85.12"
+        }
+      ]
+    },
+    "neuroimaging": {
+      "fsl": {
+        "found": true,
+        "version": "6.0.6",
+        "path": "/opt/fsl",
+        "real_path": "/opt/fsl"
+      }
+    },
+    "climate": {
+      "nco": {
+        "found": true,
+        "version": "5.1.6",
+        "path": "/usr/bin/ncks",
+        "real_path": "/usr/bin/ncks"
+      }
+    }
+  },
+  "containers": {
+    "runtimes": {
+      "docker": {
+        "found": false,
+        "version": null,
+        "path": null
+      },
+      "singularity": {
+        "found": true,
+        "version": "3.11.4",
+        "path": "/usr/bin/singularity"
+      }
+    },
+    "active_runtime": "singularity",
+    "active_version": "3.11.4",
+    "docker_in_docker": false,
+    "current_image": "docker://biocontainers/samtools:1.17"
+  },
+  "galaxy": {
+    "found": false,
+    "workflows": [],
+    "galaxy_server": null
+  },
+  "references": {
+    "genome_build": "GRCh38",
+    "ensembl_version": "109",
+    "files": {
+      "hg38.fa": {
+        "size_gb": 3.1,
+        "md5": "a4b6c3d8e9f0123456789abcdef01234"
+      }
+    }
+  },
+  "environment": {
+    "locale": {
+      "LC_ALL": "en_US.UTF-8"
+    },
+    "timezone": "UTC",
+    "shell": "/bin/bash",
+    "proxy": null
+  },
+  "verified_outputs": {
+    "verified_at": "2026-03-02T16:45:00",
+    "files": {
+      "results/variants.vcf": {
+        "md5": "9f3a2b4c5d6e7f8a9b0c1d2e3f4a5b6c",
+        "size_bytes": 1048576
+      }
+    }
+  },
+  "data_versions_used": {
+    "breaking_changes": "1.4.2",
+    "pipeline_requirements": "1.2.0",
+    "cve_snapshot": "2026.02.01"
+  }
+}

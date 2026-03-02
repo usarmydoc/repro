@@ -1,0 +1,178 @@
+{
+  "samtools": [
+    {
+      "from": "1.17",
+      "to": "1.18",
+      "severity": "high",
+      "description": "Changed CIGAR string handling in BAM output. Tools parsing CIGAR strings downstream (GATK, bcftools) may produce different results.",
+      "source_url": "https://github.com/samtools/samtools/releases/tag/1.18",
+      "affected_tools": ["gatk", "bcftools", "picard"]
+    },
+    {
+      "from": "1.15",
+      "to": "1.16",
+      "severity": "medium",
+      "description": "Default sorting behavior changed for supplementary alignments. May affect downstream variant callers.",
+      "source_url": "https://github.com/samtools/samtools/releases/tag/1.16",
+      "affected_tools": ["gatk", "freebayes"]
+    }
+  ],
+  "nextflow": [
+    {
+      "from": "22.x",
+      "to": "23.x",
+      "severity": "high",
+      "description": "DSL1 syntax removed entirely. Pipelines using DSL1 will fail to parse.",
+      "source_url": "https://github.com/nextflow-io/nextflow/releases/tag/v23.04.0",
+      "affected_tools": []
+    },
+    {
+      "from": "23.x",
+      "to": "24.x",
+      "severity": "medium",
+      "description": "Process directive 'when' deprecated. Use conditional workflow logic instead.",
+      "source_url": "https://github.com/nextflow-io/nextflow/releases/tag/v24.04.0",
+      "affected_tools": []
+    }
+  ],
+  "snakemake": [
+    {
+      "from": "7.x",
+      "to": "8.x",
+      "severity": "high",
+      "description": "Complete rewrite of the execution engine. Rule syntax changes break most existing Snakefiles without migration.",
+      "source_url": "https://snakemake.readthedocs.io/en/stable/getting_started/migration.html",
+      "affected_tools": []
+    }
+  ],
+  "gatk": [
+    {
+      "from": "4.3.x",
+      "to": "4.4.x",
+      "severity": "high",
+      "description": "HaplotypeCaller default ploidy model changed. Variant calls may differ significantly on the same input.",
+      "source_url": "https://github.com/broadinstitute/gatk/releases/tag/4.4.0.0",
+      "affected_tools": []
+    }
+  ],
+  "STAR": [
+    {
+      "from": "2.7.10",
+      "to": "2.7.11",
+      "severity": "medium",
+      "description": "Changed default chimeric alignment parameters. Fusion detection pipelines may report different chimeric reads.",
+      "source_url": "https://github.com/alexdobin/STAR/releases/tag/2.7.11a",
+      "affected_tools": ["arriba", "star-fusion"]
+    }
+  ],
+  "bowtie2": [
+    {
+      "from": "2.4.x",
+      "to": "2.5.x",
+      "severity": "medium",
+      "description": "Scoring function defaults changed. Alignment rates and MAPQ values may differ.",
+      "source_url": "https://github.com/BenLangmead/bowtie2/releases/tag/v2.5.0",
+      "affected_tools": []
+    }
+  ],
+  "fastqc": [
+    {
+      "from": "0.11.x",
+      "to": "0.12.x",
+      "severity": "low",
+      "description": "Updated adapter database and overrepresented sequence detection. Report content may differ but does not affect downstream analysis.",
+      "source_url": "https://github.com/s-andrews/FastQC/releases/tag/v0.12.0",
+      "affected_tools": ["multiqc"]
+    }
+  ],
+  "trimmomatic": [
+    {
+      "from": "0.38",
+      "to": "0.39",
+      "severity": "medium",
+      "description": "Quality score encoding detection changed. PHRED33/64 auto-detection may behave differently on edge cases.",
+      "source_url": "http://www.usadellab.org/cms/?page=trimmomatic",
+      "affected_tools": []
+    }
+  ],
+  "bcftools": [
+    {
+      "from": "1.17",
+      "to": "1.18",
+      "severity": "medium",
+      "description": "VCF normalization behavior changed for multi-allelic sites. Downstream annotation tools may see different variant representations.",
+      "source_url": "https://github.com/samtools/bcftools/releases/tag/1.18",
+      "affected_tools": ["vep", "annovar", "snpeff"]
+    }
+  ],
+  "deepvariant": [
+    {
+      "from": "1.5",
+      "to": "1.6",
+      "severity": "high",
+      "description": "Updated ML model weights. Variant calls will differ even on identical input data.",
+      "source_url": "https://github.com/google/deepvariant/releases/tag/v1.6.0",
+      "affected_tools": []
+    }
+  ],
+  "pytorch": [
+    {
+      "from": "1.x",
+      "to": "2.x",
+      "severity": "high",
+      "description": "torch.compile() changes default behavior. Models may produce different numerical results due to fusion optimizations.",
+      "source_url": "https://pytorch.org/blog/pytorch-2.0-release/",
+      "affected_tools": []
+    }
+  ],
+  "tensorflow": [
+    {
+      "from": "2.15",
+      "to": "2.16",
+      "severity": "medium",
+      "description": "Keras 3 becomes default backend. Model loading from older checkpoints may require compatibility flags.",
+      "source_url": "https://blog.tensorflow.org/",
+      "affected_tools": ["keras"]
+    }
+  ],
+  "R": [
+    {
+      "from": "4.2.x",
+      "to": "4.3.x",
+      "severity": "medium",
+      "description": "Default UTF-8 encoding on Windows. String handling may differ. sample() RNG changed in 4.3.0.",
+      "source_url": "https://cran.r-project.org/doc/manuals/r-release/NEWS.html",
+      "affected_tools": []
+    }
+  ],
+  "python": [
+    {
+      "from": "3.11",
+      "to": "3.12",
+      "severity": "low",
+      "description": "Removed distutils. Packages relying on distutils will fail to install. Use setuptools instead.",
+      "source_url": "https://docs.python.org/3/whatsnew/3.12.html",
+      "affected_tools": []
+    }
+  ],
+  "fastp": [
+    {
+      "from": "0.22.x",
+      "to": "0.23.x",
+      "severity": "low",
+      "description": "Changed default overlap correction parameters for paired-end data. Minor differences in adapter trimming output.",
+      "source_url": "https://github.com/OpenGene/fastp/releases/tag/v0.23.0",
+      "affected_tools": []
+    }
+  ],
+  "minimap2": [
+    {
+      "from": "2.26",
+      "to": "2.27",
+      "severity": "medium",
+      "description": "Updated chaining algorithm for long reads. Alignment coordinates may shift for complex structural variants.",
+      "source_url": "https://github.com/lh3/minimap2/releases/tag/v2.27",
+      "affected_tools": []
+    }
+  ]
+}
