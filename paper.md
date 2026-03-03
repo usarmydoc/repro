@@ -59,7 +59,7 @@ complementary set of commands for comparison, diagnosis, and restoration.
 # State of the Field
 
 Several tools address parts of the reproducibility stack.
-Conda [@gruning2018] and its Bioconda channel provide cross-platform package
+Bioconda [@gruning2018] and its Bioconda channel provide cross-platform package
 management for bioinformatics software, but do not capture system-level state,
 GPU hardware, or tools installed outside the Conda ecosystem. Workflow managers
 such as Nextflow [@ditommaso2017] and Snakemake [@molder2021] version-control
