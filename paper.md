@@ -7,11 +7,11 @@ tags:
   - computational science
   - environment management
 authors:
-  - name: Ross [SURNAME]
+  - name: Ross Meade
     orcid: 0000-0000-0000-0000
     affiliation: 1
 affiliations:
-  - name: "[YOUR INSTITUTION]"
+  - name: Independent Researcher
     index: 1
 date: 2 March 2026
 bibliography: paper.bib
