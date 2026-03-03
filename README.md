@@ -7,6 +7,8 @@
 
 **repro is for scientific pipelines with non-Python dependencies.** If you are building a pure Python project, use [uv](https://github.com/astral-sh/uv) or [Poetry](https://python-poetry.org/) instead — they are excellent tools and repro adds nothing for that use case. repro works alongside those tools.
 
+![demo](demo.gif)
+
 ## The Problem
 
 Computational science pipelines break constantly when moved between machines. The reproducibility crisis is real: **only ~26% of published analyses can be successfully re-executed** (Trisovic et al., 2022, *Scientific Data*). This happens despite researchers using package managers — because package managers only solve part of the problem.
