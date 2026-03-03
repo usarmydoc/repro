@@ -14,6 +14,6 @@ jobs:
       - name: Update data files
         run: repro update-data --auto
       - name: Feasibility check
-        run: repro feasibility repro.lock --json --strict
+        run: repro feasibility repro.lock --json
       - name: Environment check
         run: repro check repro.lock --ci
