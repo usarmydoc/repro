@@ -1,7 +1,7 @@
 # repro
 
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Platform: Linux | macOS | WSL](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20WSL-lightgrey)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-brightgreen)
 
