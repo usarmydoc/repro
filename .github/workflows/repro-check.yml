@@ -10,7 +10,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install repro
-        run: pip install.
+        run: pip install .
       - name: Update data files
         run: repro update-data --auto
       - name: Feasibility check
