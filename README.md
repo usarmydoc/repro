@@ -82,6 +82,9 @@ repro restore repro.lock
 | `repro verify-signature` | <1s | Verify GPG signature |
 | `repro update-data` | ~5s | Pull latest breaking changes and CVE data |
 
+> **Note:** `repro update-data` currently falls back to bundled data files 
+> (current as of March 2026). Remote data repository coming soon.
+
 ### `repro score` vs `repro check`
 
 These are **different commands** for different situations:
