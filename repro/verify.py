@@ -198,17 +198,21 @@ def scan_and_hash(directory: str, sample: bool = False,
 
 def run_verify(output_dir: str, lockfile_path: str,
                sample: bool = False, excludes: Optional[List[str]] = None):
-    """Hash output files and store in lockfile."""
-    if not os.path.isdir(output_dir):
-        console.print("[red]Error:[/red] Directory not found: {}".format(output_dir))
-        raise SystemExit(1)
+    """Hash output files and verify against stored hashes.
 
-    results = scan_and_hash(output_dir, sample=sample, excludes=excludes)
-
-    # Read existing lockfile or create new
+    Two modes:
+    1. Compare mode: lockfile has verified_outputs.files — rehash each file
+       and compare against stored hashes. Exit non-zero on any mismatch.
+    2. Store mode: lockfile has no verified_outputs.files — scan directory,
+       hash everything, and store results in the lockfile.
+    """
+    # Read existing lockfile
     try:
         data = lockfile.read_lockfile(lockfile_path)
     except FileNotFoundError:
+        if output_dir == ".":
+            console.print("[red]Error:[/red] Lockfile not found: {}".format(lockfile_path))
+            raise SystemExit(1)
         data = lockfile.empty_lockfile()
         data["created_at"] = datetime.datetime.now().isoformat(timespec="seconds")
         from repro import __version__
@@ -217,11 +221,82 @@ def run_verify(output_dir: str, lockfile_path: str,
         console.print("[red]Error reading lockfile:[/red] {}".format(e))
         raise SystemExit(1)
 
+    stored = data.get("verified_outputs", {}).get("files", {})
+
+    # Compare mode: lockfile has stored hashes — verify them
+    if stored:
+        passed = 0
+        failed = 0
+        missing = 0
+        results = []
+
+        for file_path, expected in stored.items():
+            expected_hash = expected.get("md5", "")
+            if not os.path.exists(file_path):
+                results.append(("MISSING", file_path, expected_hash, ""))
+                missing += 1
+                continue
+
+            ftype = _classify_file(file_path)
+            normalize = ftype == "text"
+            actual_hash = _hash_file(file_path, normalize_text=normalize)
+
+            if actual_hash == expected_hash:
+                results.append(("PASS", file_path, expected_hash, actual_hash))
+                passed += 1
+            else:
+                results.append(("FAIL", file_path, expected_hash, actual_hash))
+                failed += 1
+
+        # Display results
+        table = Table(title="Verification Results")
+        table.add_column("Status", style="bold")
+        table.add_column("File")
+        table.add_column("Expected MD5")
+        table.add_column("Actual MD5")
+
+        for status, fpath, expected_hash, actual_hash in results:
+            # Show basename for readability, full path in long outputs
+            display_path = os.path.basename(fpath)
+            if status == "PASS":
+                table.add_row("[green]PASS[/green]", display_path,
+                              expected_hash[:16] + "...", actual_hash[:16] + "...")
+            elif status == "FAIL":
+                table.add_row("[red]FAIL[/red]", display_path,
+                              expected_hash, actual_hash)
+            elif status == "MISSING":
+                table.add_row("[red]MISSING[/red]", fpath,
+                              expected_hash[:16] + "...", "[red]file not found[/red]")
+
+        console.print(table)
+        console.print(
+            "\n[bold]Summary:[/bold] {} passed, {} failed, {} missing".format(
+                passed, failed, missing
+            )
+        )
+
+        if failed > 0 or missing > 0:
+            console.print(
+                "[bold red]VERIFICATION FAILED[/bold red] — "
+                "output files do not match recorded hashes."
+            )
+            raise SystemExit(1)
+        else:
+            console.print("[bold green]VERIFICATION PASSED[/bold green]")
+            return
+
+    # Store mode: no stored hashes — scan directory and store
+    if not os.path.isdir(output_dir):
+        console.print("[red]Error:[/red] Directory not found: {}".format(output_dir))
+        raise SystemExit(1)
+
+    scan_results = scan_and_hash(output_dir, sample=sample, excludes=excludes)
+
     data["verified_outputs"] = {
         "verified_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "directory": os.path.abspath(output_dir),
-        "file_count": len(results),
-        "files": results,
+        "file_count": len(scan_results),
+        "files": scan_results,
     }
 
     lockfile.write_lockfile(lockfile_path, data)
@@ -231,11 +306,11 @@ def run_verify(output_dir: str, lockfile_path: str,
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
 
-    table.add_row("Files hashed", str(len(results)))
-    total_size = sum(f["size_bytes"] for f in results.values())
+    table.add_row("Files hashed", str(len(scan_results)))
+    total_size = sum(f["size_bytes"] for f in scan_results.values())
     table.add_row("Total size", "{:.1f} MB".format(total_size / (1024 * 1024)))
-    text_count = sum(1 for f in results.values() if f["type"] == "text")
-    binary_count = sum(1 for f in results.values() if f["type"] == "binary")
+    text_count = sum(1 for f in scan_results.values() if f["type"] == "text")
+    binary_count = sum(1 for f in scan_results.values() if f["type"] == "binary")
     table.add_row("Text files", str(text_count))
     table.add_row("Binary files", str(binary_count))
     table.add_row("Stored in", lockfile_path)

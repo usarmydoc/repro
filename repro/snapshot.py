@@ -38,6 +38,7 @@ def run_snapshot(
     search_paths: list = None,
     quiet: bool = False,
     ref_dirs: list = None,
+    output_files: list = None,
 ) -> dict:
     """Run a full environment snapshot.
 
@@ -106,6 +107,44 @@ def run_snapshot(
                             "[yellow]Warning:[/yellow] {} detection failed: {}".format(name, e)
                         )
                 progress.advance(task)
+
+    # Hash output files if specified
+    if output_files:
+        from repro.verify import _classify_file, _hash_file
+        import os
+        files_dict = {}
+        for fpath in output_files:
+            abs_path = os.path.abspath(fpath)
+            if not os.path.exists(abs_path):
+                if not quiet:
+                    console.print(
+                        "[yellow]Warning:[/yellow] Output file not found: {}".format(fpath)
+                    )
+                continue
+            ftype = _classify_file(abs_path)
+            normalize = ftype == "text"
+            md5 = _hash_file(abs_path, normalize_text=normalize)
+            try:
+                size = os.path.getsize(abs_path)
+            except OSError:
+                size = 0
+            files_dict[abs_path] = {
+                "md5": md5,
+                "size_bytes": size,
+                "type": ftype,
+            }
+        import datetime as _dt
+        data["verified_outputs"] = {
+            "verified_at": _dt.datetime.now().isoformat(timespec="seconds"),
+            "file_count": len(files_dict),
+            "files": files_dict,
+        }
+        if not quiet:
+            console.print(
+                "[green]Registered {} output file(s) for verification[/green]".format(
+                    len(files_dict)
+                )
+            )
 
     # Add data file versions
     data["data_versions_used"] = _get_data_versions()

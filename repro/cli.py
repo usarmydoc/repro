@@ -36,6 +36,7 @@ def snapshot(
     env: Optional[str] = typer.Option(None, "--env", help="Snapshot a specific conda environment"),
     search_paths: Optional[str] = typer.Option(None, "--search-paths", help="Additional tool search paths (colon-separated)"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="No progress output (for git hooks)"),
+    outputs: Optional[List[str]] = typer.Option(None, "--outputs", help="Output files to hash for verification"),
 ):
     """Capture entire environment into a repro.lock file."""
     from repro.snapshot import run_snapshot
@@ -49,6 +50,7 @@ def snapshot(
         env_name=env,
         search_paths=paths,
         quiet=quiet,
+        output_files=outputs,
     )
 
 
@@ -96,10 +98,11 @@ def restore(
     lockfile_path: str = typer.Argument("repro.lock", help="Path to repro.lock"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done"),
     from_bundle: Optional[str] = typer.Option(None, "--from-bundle", help="Restore from offline bundle"),
+    target: Optional[str] = typer.Option(None, "--target", help="Target path (venv) or env name (conda)"),
 ):
     """Create a NEW isolated environment from repro.lock."""
     from repro.restore import run_restore
-    run_restore(lockfile_path, dry_run=dry_run, from_bundle=from_bundle)
+    run_restore(lockfile_path, dry_run=dry_run, from_bundle=from_bundle, target=target)
 
 
 @app.command()
