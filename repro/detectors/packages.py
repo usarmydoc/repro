@@ -29,6 +29,40 @@ def detect_pip(python: str = None) -> Dict[str, str]:
         return {}
 
 
+def detect_user_site(python: str, env_pip: Dict[str, str]) -> Dict[str, Any]:
+    """Packages in the user site-packages that `python` imports at runtime.
+
+    User site comes before the environment's site-packages on sys.path, so
+    a package present in both is loaded from user site (it shadows the env).
+    """
+    out, rc = run_cmd(
+        [python, "-c", "import site; print(site.ENABLE_USER_SITE); print(site.getusersitepackages())"],
+        combine_stderr=False,
+    )
+    lines = out.splitlines()
+    if rc != 0 or len(lines) != 2:
+        return {"status": "unknown", "reason": "could not query site module of {}".format(python)}
+    if lines[0] != "True":
+        return {"enabled": False, "path": lines[1], "packages": {}, "shadows": {}}
+
+    out, rc = run_cmd([python, "-m", "pip", "list", "--user", "--format=json"],
+                      timeout=30, combine_stderr=False)
+    try:
+        if rc != 0:
+            raise ValueError
+        user = {p["name"]: p["version"] for p in json.loads(out)}
+    except (ValueError, KeyError, TypeError):
+        return {"status": "unknown", "path": lines[1],
+                "reason": "'pip list --user' failed for {}".format(python)}
+
+    env_lower = {k.lower(): v for k, v in env_pip.items()}
+    shadows = {
+        name: {"user_site": ver, "environment": env_lower[name.lower()]}
+        for name, ver in user.items() if name.lower() in env_lower
+    }
+    return {"enabled": True, "path": lines[1], "packages": user, "shadows": shadows}
+
+
 def detect_r_packages() -> Dict[str, str]:
     """Detect installed R packages with versions."""
     if not which("Rscript"):

@@ -186,7 +186,12 @@ def _detect_packages(env_ctx: Optional[dict]) -> dict:
         return packages.detect()
     result = packages.detect(python=env_ctx["python"])
     if env_ctx["python"]:
-        result["pip_source"] = {"python": env_ctx["python"], "user_site": "excluded"}
+        result["pip_source"] = {
+            "python": env_ctx["python"],
+            "user_site": "excluded",
+            # Excluded from "pip" above, but still importable at runtime
+            "user_site_visible": packages.detect_user_site(env_ctx["python"], result["pip"]),
+        }
     else:
         # Never fall back to the pip on PATH: it belongs to another environment.
         result["pip"] = {}

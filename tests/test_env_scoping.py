@@ -83,10 +83,13 @@ def test_env_with_python_uses_that_interpreter(tmp_path, monkeypatch):
     monkeypatch.setattr(conda, "env_prefix", lambda name: str(prefix))
     seen = []
     monkeypatch.setattr(packages, "detect", lambda python=None: seen.append(python) or {"pip": {}})
+    monkeypatch.setattr(packages, "detect_user_site", lambda python, env_pip: {"stub": True})
+    monkeypatch.setattr(packages, "detect_user_site", lambda python, env_pip: {"stub": True})
 
     result = snapshot._detect_packages(snapshot._resolve_env("withpy"))
     assert seen == [str(py)]
-    assert result["pip_source"] == {"python": str(py), "user_site": "excluded"}
+    assert result["pip_source"] == {"python": str(py), "user_site": "excluded",
+                                    "user_site_visible": {"stub": True}}
 
 
 def test_unknown_env_is_reported(monkeypatch):
@@ -102,3 +105,49 @@ def test_unknown_env_is_reported(monkeypatch):
     ctx = snapshot._resolve_env("does-not-exist")
     assert ctx["prefix"] is None
     assert "not found" in snapshot._detect_packages(ctx)["pip_source"]["reason"]
+
+
+@pytest.mark.skipif(not site.ENABLE_USER_SITE, reason="user site disabled for this interpreter")
+def test_user_site_shadowing_is_recorded(tmp_path, monkeypatch):
+    """User-site packages are excluded from pip but still recorded as visible."""
+    _plant_user_site_package(tmp_path)
+    monkeypatch.setenv("PYTHONUSERBASE", str(tmp_path))
+    monkeypatch.delenv("PYTHONNOUSERSITE", raising=False)
+
+    env_pip = {"ReproFakeLeak": "1.0.0", "other": "2.0"}
+    info = packages.detect_user_site(sys.executable, env_pip)
+    assert info["enabled"] is True
+    assert info["path"].startswith(str(tmp_path))
+    assert info["packages"] == {"reprofakeleak": "9.9.9"}
+    assert info["shadows"] == {
+        "reprofakeleak": {"user_site": "9.9.9", "environment": "1.0.0"}
+    }
+
+
+def test_user_site_query_failure_is_unknown(monkeypatch):
+    monkeypatch.setattr(packages, "run_cmd", lambda *a, **k: ("", 1))
+    info = packages.detect_user_site("/nonexistent/python", {})
+    assert info["status"] == "unknown" and info["reason"]
+
+
+@pytest.mark.skipif(not site.ENABLE_USER_SITE, reason="user site disabled for this interpreter")
+def test_user_site_shadowing_is_recorded(tmp_path, monkeypatch):
+    """User-site packages are excluded from pip but still recorded as visible."""
+    _plant_user_site_package(tmp_path)
+    monkeypatch.setenv("PYTHONUSERBASE", str(tmp_path))
+    monkeypatch.delenv("PYTHONNOUSERSITE", raising=False)
+
+    env_pip = {"ReproFakeLeak": "1.0.0", "other": "2.0"}
+    info = packages.detect_user_site(sys.executable, env_pip)
+    assert info["enabled"] is True
+    assert info["path"].startswith(str(tmp_path))
+    assert info["packages"] == {"reprofakeleak": "9.9.9"}
+    assert info["shadows"] == {
+        "reprofakeleak": {"user_site": "9.9.9", "environment": "1.0.0"}
+    }
+
+
+def test_user_site_query_failure_is_unknown(monkeypatch):
+    monkeypatch.setattr(packages, "run_cmd", lambda *a, **k: ("", 1))
+    info = packages.detect_user_site("/nonexistent/python", {})
+    assert info["status"] == "unknown" and info["reason"]
