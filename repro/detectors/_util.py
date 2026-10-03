@@ -95,15 +95,27 @@ def detect_binary(binary: str, version_cmd: list, version_regex: str = None,
     if version_cmd and version_cmd[0] == binary:
         version_cmd = [path] + list(version_cmd[1:])
     out, _ = run_cmd(version_cmd)
-    version = out
-    if version_regex and out:
+    version, reason = out, None
+    if not out:
+        version, reason = None, "'{}' produced no output".format(" ".join(version_cmd))
+    elif version_regex:
         match = re.search(version_regex, out)
         if match:
             version = match.group(1)
+        else:
+            # Never record unparsed output (e.g. an error message) as the version
+            version = None
+            reason = "no version matching {!r} in output of '{}'".format(
+                version_regex, " ".join(version_cmd))
 
-    return {
+    info = {
         "found": True,
         "version": version or "unknown",
         "path": path,
         "real_path": real_path if real_path != path else path,
     }
+    if reason:
+        info["reason"] = reason
+        if out:
+            info["version_output"] = out[:200]
+    return info
