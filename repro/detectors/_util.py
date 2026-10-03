@@ -4,6 +4,7 @@ Consolidates common patterns: subprocess execution, binary lookup,
 version extraction, and path resolution.
 """
 
+import hashlib
 import os
 import re
 import shutil
@@ -119,3 +120,12 @@ def detect_binary(binary: str, version_cmd: list, version_regex: str = None,
         if out:
             info["version_output"] = out[:200]
     return info
+
+
+def sha256_file(path: str) -> str:
+    """SHA-256 of a file, streamed in 1 MiB chunks. Raises OSError."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()

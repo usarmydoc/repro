@@ -5,10 +5,11 @@ script-based pipelines. Also detects nested pipelines (e.g., Nextflow calling
 Snakemake).
 """
 
-import hashlib
 import os
 import re
 from typing import Any, Dict, List, Optional
+
+from repro.detectors._util import run_cmd, sha256_file
 
 
 # Pipeline file patterns: (glob pattern, pipeline type)
@@ -34,14 +35,10 @@ EXTENSION_MAP = {
 }
 
 
-def _file_md5(path: str) -> Optional[str]:
-    """Compute MD5 checksum of a file."""
+def _file_sha256(path: str) -> Optional[str]:
+    """Compute SHA-256 checksum of a file."""
     try:
-        h = hashlib.md5()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
-                h.update(chunk)
-        return h.hexdigest()
+        return sha256_file(path)
     except OSError:
         return None
 
@@ -120,6 +117,7 @@ def detect_config_checksums(directory: str = ".") -> Dict[str, str]:
     """Compute checksums for pipeline configuration files."""
     config_patterns = [
         "nextflow.config",
+        "main.nf",
         "Snakefile",
         "*.wdl",
         "*.cwl",
@@ -136,24 +134,79 @@ def detect_config_checksums(directory: str = ".") -> Dict[str, str]:
             for pattern in config_patterns:
                 if pattern.startswith("*"):
                     if entry.endswith(pattern[1:]):
-                        md5 = _file_md5(os.path.join(directory, entry))
-                        if md5:
-                            checksums[entry] = md5
+                        digest = _file_sha256(os.path.join(directory, entry))
+                        if digest:
+                            checksums[entry] = digest
                 elif entry == pattern:
-                    md5 = _file_md5(os.path.join(directory, entry))
-                    if md5:
-                        checksums[entry] = md5
+                    digest = _file_sha256(os.path.join(directory, entry))
+                    if digest:
+                        checksums[entry] = digest
     except OSError:
         pass
 
     return checksums
 
 
-def detect(directory: str = ".") -> Dict[str, Any]:
+_MANIFEST_NAME_RES = [
+    re.compile(r"manifest\s*\{[^}]*?\bname\s*=\s*['\"]([^'\"]+)['\"]", re.DOTALL),
+    re.compile(r"manifest\.name\s*=\s*['\"]([^'\"]+)['\"]"),
+]
+
+
+def _pipeline_name(directory: str) -> Dict[str, Any]:
+    """Pipeline name from the nextflow.config manifest."""
+    config = os.path.join(directory, "nextflow.config")
+    try:
+        with open(config, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except OSError:
+        return {"name": None, "name_reason": "no readable nextflow.config"}
+    for pattern in _MANIFEST_NAME_RES:
+        match = pattern.search(content)
+        if match:
+            return {"name": match.group(1)}
+    return {"name": None, "name_reason": "no manifest name in nextflow.config"}
+
+
+def _git_state(directory: str) -> Dict[str, Any]:
+    """Git commit and working-tree cleanliness of the pipeline directory."""
+    # --no-optional-locks: reading status must not rewrite the repo's index
+    git = ["git", "--no-optional-locks", "-C", directory]
+    commit, rc = run_cmd(git + ["rev-parse", "HEAD"], combine_stderr=False)
+    if rc != 0 or not commit:
+        return {"git_commit": None, "git_clean": None,
+                "git_reason": "not a git repository, or git unavailable"}
+    status, rc = run_cmd(git + ["status", "--porcelain"], timeout=60, combine_stderr=False)
+    if rc != 0:
+        return {"git_commit": commit, "git_clean": None, "git_reason": "git status failed"}
+    changed = [line for line in status.splitlines() if line.strip()]
+    toplevel, _ = run_cmd(git + ["rev-parse", "--show-toplevel"], combine_stderr=False)
+    return {
+        "git_commit": commit,
+        "git_toplevel": toplevel or None,
+        "git_clean": not changed,
+        "git_changed_paths": len(changed),
+    }
+
+
+def detect_source(directory: str) -> Dict[str, Any]:
+    """Identify an explicitly given pipeline directory: name, path, git state."""
+    path = os.path.abspath(directory)
+    if not os.path.isdir(path):
+        return {"path": path, "error": "pipeline directory not found"}
+    source = {"path": path}
+    source.update(_pipeline_name(path))
+    source.update(_git_state(path))
+    return source
+
+
+def detect(directory: str = ".", explicit: bool = False) -> Dict[str, Any]:
     """Full pipeline detection.
 
     Args:
         directory: Directory to scan for pipeline files.
+        explicit: The directory was given with --pipeline; also record
+            its name, path and git state.
     """
     primary = detect_pipeline_type(directory)
     nested = detect_nested_pipelines(directory)
@@ -162,11 +215,15 @@ def detect(directory: str = ".") -> Dict[str, Any]:
     # Remove primary type from nested list
     nested = [n for n in nested if n != primary]
 
-    return {
+    result = {
         "primary_type": primary,
         "nested_pipelines": nested,
         "config_checksums": checksums,
+        "checksum_algorithm": "sha256",
     }
+    if explicit:
+        result["source"] = detect_source(directory)
+    return result
 
 
 if __name__ == "__main__":

@@ -37,6 +37,8 @@ def snapshot(
     search_paths: Optional[str] = typer.Option(None, "--search-paths", help="Additional tool search paths (colon-separated)"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="No progress output (for git hooks)"),
     outputs: Optional[List[str]] = typer.Option(None, "--outputs", help="Output files to hash for verification"),
+    pipeline_dir: Optional[str] = typer.Option(None, "--pipeline", help="Pipeline directory to record (name, git commit, config checksums)"),
+    image_dir: Optional[str] = typer.Option(None, "--container-images", help="Directory of container images to checksum (SHA-256)"),
 ):
     """Capture entire environment into a repro.lock file."""
     from repro.snapshot import run_snapshot
@@ -51,6 +53,8 @@ def snapshot(
         search_paths=paths,
         quiet=quiet,
         output_files=outputs,
+        pipeline_dir=pipeline_dir,
+        image_dir=image_dir,
     )
 
 

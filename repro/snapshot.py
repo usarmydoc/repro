@@ -40,6 +40,8 @@ def run_snapshot(
     quiet: bool = False,
     ref_dirs: list = None,
     output_files: list = None,
+    pipeline_dir: str = None,
+    image_dir: str = None,
 ) -> dict:
     """Run a full environment snapshot.
 
@@ -52,6 +54,8 @@ def run_snapshot(
         search_paths: Additional directories to search for tools.
         quiet: Suppress progress output (for git hooks).
         ref_dirs: Additional directories to scan for reference data.
+        pipeline_dir: Pipeline directory to record (default: scan cwd).
+        image_dir: Directory of container images to checksum.
 
     Returns:
         The complete snapshot dict.
@@ -75,9 +79,13 @@ def run_snapshot(
         ("Containers", lambda: containers.detect(search_paths=_container_paths(env_ctx, search_paths))),
         ("GPU/CUDA", lambda: gpu.detect()),
         ("Galaxy workflows", lambda: galaxy.detect()),
-        ("Pipeline type", lambda: pipeline.detect()),
+        ("Pipeline type", lambda: pipeline.detect(pipeline_dir, explicit=True)
+         if pipeline_dir else pipeline.detect()),
         ("Environment", lambda: environment.detect()),
     ]
+
+    if image_dir:
+        steps.append(("Container images", lambda: containers.detect_images(image_dir)))
 
     if capture_refs:
         steps.append(("Reference data", lambda: refs.detect(ref_dirs=ref_dirs)))
@@ -236,6 +244,7 @@ def _merge_result(data: dict, step_name: str, result: dict):
         "Packages": "_packages",  # Merged specially
         "CLI tools": "tools",
         "Containers": "containers",
+        "Container images": "_images",
         "GPU/CUDA": "_gpu",
         "Galaxy workflows": "galaxy",
         "Pipeline type": "_pipeline",
@@ -262,6 +271,8 @@ def _merge_result(data: dict, step_name: str, result: dict):
             data["package_managers"]["conda"]["error"] = result["error"]
         if result.get("all_envs"):
             data["package_managers"]["conda"]["all_envs"] = result["all_envs"]
+    elif key == "_images":
+        data.setdefault("containers", {})["images"] = result
     elif key == "_venv":
         data["package_managers"]["virtualenv"] = result
     elif key == "_packages":

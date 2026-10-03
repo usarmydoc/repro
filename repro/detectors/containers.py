@@ -7,7 +7,7 @@ a clean not-found result.
 import os
 from typing import Any, Dict, Optional
 
-from repro.detectors._util import detect_binary
+from repro.detectors._util import detect_binary, sha256_file
 
 
 def _detect_docker_in_docker() -> bool:
@@ -31,6 +31,33 @@ def _detect_current_image() -> Optional[str]:
         if val:
             return val
     return None
+
+
+def detect_images(directory: str) -> Dict[str, Any]:
+    """Record every file in a container image directory: name, size, SHA-256."""
+    path = os.path.abspath(directory)
+    if not os.path.isdir(path):
+        return {"directory": path, "error": "image directory not found", "files": []}
+    files, walk_errors = [], []
+    for root, _, names in os.walk(path, onerror=lambda e: walk_errors.append(str(e))):
+        for name in names:
+            full = os.path.join(root, name)
+            entry = {"name": os.path.relpath(full, path)}
+            try:
+                entry["size_bytes"] = os.path.getsize(full)
+                entry["sha256"] = sha256_file(full)
+            except OSError as e:
+                entry["sha256"] = None
+                entry["error"] = str(e)
+            files.append(entry)
+    files.sort(key=lambda f: f["name"])
+    return {
+        "directory": path,
+        "file_count": len(files),
+        "total_bytes": sum(f.get("size_bytes", 0) for f in files),
+        "files": files,
+        **({"walk_errors": walk_errors} if walk_errors else {}),
+    }
 
 
 def detect(search_paths: list = None) -> Dict[str, Any]:
