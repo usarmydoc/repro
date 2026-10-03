@@ -4,12 +4,22 @@ import json
 import re
 from typing import Any, Dict
 
-from repro.detectors._util import run_cmd, which
+from repro.detectors._util import NO_USER_SITE, run_cmd, which
 
 
-def detect_pip() -> Dict[str, str]:
-    """Detect installed pip packages with versions."""
-    out, rc = run_cmd(["pip", "list", "--format=json"], timeout=30, combine_stderr=False)
+def detect_pip(python: str = None) -> Dict[str, str]:
+    """Detect installed pip packages with versions.
+
+    Args:
+        python: Interpreter whose packages to list. If given, user
+            site-packages are excluded so only that environment is seen.
+            If None, uses the pip on PATH.
+    """
+    if python:
+        cmd, env = [python, "-m", "pip", "list", "--format=json"], NO_USER_SITE
+    else:
+        cmd, env = ["pip", "list", "--format=json"], None
+    out, rc = run_cmd(cmd, timeout=30, combine_stderr=False, env=env)
     if rc != 0 or not out:
         return {}
     try:
@@ -109,10 +119,14 @@ def detect_cargo() -> Dict[str, str]:
     return result
 
 
-def detect() -> Dict[str, Any]:
-    """Detect all package managers and their installed packages."""
+def detect(python: str = None) -> Dict[str, Any]:
+    """Detect all package managers and their installed packages.
+
+    Args:
+        python: Interpreter for the pip listing (see detect_pip).
+    """
     return {
-        "pip": detect_pip(),
+        "pip": detect_pip(python),
         "R_packages": detect_r_packages(),
         "julia_packages": detect_julia_packages(),
         "npm": detect_npm(),

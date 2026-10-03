@@ -4,7 +4,7 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from repro.detectors._util import run_cmd, which
+from repro.detectors._util import NO_USER_SITE, run_cmd, which
 
 
 def _find_conda_binary() -> Optional[str]:
@@ -63,7 +63,9 @@ def _list_packages(binary: str, env_name: str = None) -> List[dict]:
     if env_name and env_name != "base":
         cmd.extend(["-n", env_name])
 
-    out, rc = run_cmd(cmd, timeout=60, combine_stderr=False)
+    # mamba lists pip packages by running the env's pip, which also sees
+    # ~/.local site-packages unless user site is disabled.
+    out, rc = run_cmd(cmd, timeout=60, combine_stderr=False, env=NO_USER_SITE)
     if rc != 0 or not out:
         return []
 
@@ -71,6 +73,17 @@ def _list_packages(binary: str, env_name: str = None) -> List[dict]:
         return json.loads(out)
     except json.JSONDecodeError:
         return []
+
+
+def env_prefix(env_name: str) -> Optional[str]:
+    """Resolve a conda environment name to its prefix directory, or None."""
+    binary = _find_conda_binary()
+    if binary is None:
+        return None
+    for env in _list_envs(binary):
+        if env["name"] == env_name:
+            return env["path"]
+    return None
 
 
 def _packages_to_dict(raw_packages: list) -> Dict[str, str]:
@@ -141,6 +154,10 @@ def detect(all_envs: bool = False, env_name: str = None) -> Dict[str, Any]:
         "conflicts": conflicts,
         "install_in_progress": installing,
     }
+
+    if env_name and env_prefix(env_name) is None:
+        result["error"] = "conda environment '{}' not found by '{} env list'".format(
+            env_name, binary)
 
     if all_envs:
         envs = _list_envs(binary)

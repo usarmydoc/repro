@@ -5,6 +5,7 @@ to a repro.lock file. Respects --offline, --refs, --all-envs, etc.
 """
 
 import datetime
+import os
 from typing import Optional
 
 from rich.console import Console
@@ -58,6 +59,8 @@ def run_snapshot(
     if offline:
         network.force_offline(True)
 
+    env_ctx = _resolve_env(env_name)
+
     data = lockfile.empty_lockfile()
     data["created_at"] = datetime.datetime.now().isoformat(timespec="seconds")
     data["repro_version"] = __version__
@@ -67,7 +70,7 @@ def run_snapshot(
         ("Languages", lambda: languages.detect()),
         ("Conda/Mamba", lambda: conda.detect(all_envs=all_envs, env_name=env_name)),
         ("Virtual environments", lambda: virtualenv.detect()),
-        ("Packages", lambda: packages.detect()),
+        ("Packages", lambda: _detect_packages(env_ctx)),
         ("CLI tools", lambda: tools.detect(search_paths=search_paths)),
         ("Containers", lambda: containers.detect()),
         ("GPU/CUDA", lambda: gpu.detect()),
@@ -164,6 +167,37 @@ def run_snapshot(
     return data
 
 
+def _resolve_env(env_name: Optional[str]) -> Optional[dict]:
+    """With --env, locate the environment's prefix and Python interpreter."""
+    if not env_name:
+        return None
+    prefix = conda.env_prefix(env_name)
+    python = None
+    if prefix:
+        candidate = os.path.join(prefix, "bin", "python")
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            python = candidate
+    return {"name": env_name, "prefix": prefix, "python": python}
+
+
+def _detect_packages(env_ctx: Optional[dict]) -> dict:
+    """Package detection, scoped to the --env environment's interpreter."""
+    if env_ctx is None:
+        return packages.detect()
+    result = packages.detect(python=env_ctx["python"])
+    if env_ctx["python"]:
+        result["pip_source"] = {"python": env_ctx["python"], "user_site": "excluded"}
+    else:
+        # Never fall back to the pip on PATH: it belongs to another environment.
+        result["pip"] = {}
+        if env_ctx["prefix"]:
+            reason = "no Python interpreter at {}/bin/python".format(env_ctx["prefix"])
+        else:
+            reason = "conda environment '{}' not found".format(env_ctx["name"])
+        result["pip_source"] = {"python": None, "status": "unknown", "reason": reason}
+    return result
+
+
 def _merge_result(data: dict, step_name: str, result: dict):
     """Merge detector results into the lockfile data structure."""
     name_map = {
@@ -194,12 +228,16 @@ def _merge_result(data: dict, step_name: str, result: dict):
             "packages": result.get("packages", {}),
             "conflicts": result.get("conflicts", []),
         }
+        if result.get("error"):
+            data["package_managers"]["conda"]["error"] = result["error"]
         if result.get("all_envs"):
             data["package_managers"]["conda"]["all_envs"] = result["all_envs"]
     elif key == "_venv":
         data["package_managers"]["virtualenv"] = result
     elif key == "_packages":
         data["package_managers"]["pip"] = result.get("pip", {})
+        if "pip_source" in result:
+            data["package_managers"]["pip_source"] = result["pip_source"]
         data["package_managers"]["R_packages"] = result.get("R_packages", {})
         data["package_managers"]["julia_packages"] = result.get("julia_packages", {})
         data["package_managers"]["npm"] = result.get("npm", {})

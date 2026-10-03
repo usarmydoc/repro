@@ -11,7 +11,7 @@ import subprocess
 from typing import Any, Dict, Optional, Tuple
 
 
-def run_cmd(cmd, timeout=10, combine_stderr=True) -> Tuple[str, int]:
+def run_cmd(cmd, timeout=10, combine_stderr=True, env=None) -> Tuple[str, int]:
     """Run a command and return (output, returncode). Never raises.
 
     Args:
@@ -19,13 +19,15 @@ def run_cmd(cmd, timeout=10, combine_stderr=True) -> Tuple[str, int]:
         timeout: Max seconds to wait.
         combine_stderr: If True, fall back to stderr when stdout is empty.
             Useful for tools like java that print version info to stderr.
+        env: Extra environment variables, merged over os.environ.
 
     Returns:
         (output_string, return_code). On failure returns ("", 1).
     """
     try:
+        full_env = dict(os.environ, **env) if env else None
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout
+            cmd, capture_output=True, text=True, timeout=timeout, env=full_env
         )
         if combine_stderr:
             out = result.stdout.strip() or result.stderr.strip()
@@ -34,6 +36,11 @@ def run_cmd(cmd, timeout=10, combine_stderr=True) -> Tuple[str, int]:
         return out, result.returncode
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return "", 1
+
+
+# Keep ~/.local site-packages out of package listings: it belongs to the
+# user, not to the environment being snapshotted.
+NO_USER_SITE = {"PYTHONNOUSERSITE": "1"}
 
 
 def which(binary: str) -> Optional[str]:
