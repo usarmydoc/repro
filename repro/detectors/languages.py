@@ -4,21 +4,40 @@ import os
 import sys
 from typing import Any, Dict
 
-from repro.detectors._util import detect_binary, resolve_path
+from repro.detectors._util import detect_binary, resolve_path, run_cmd
 
 
-def detect() -> Dict[str, Any]:
-    """Detect all supported language runtimes."""
+def detect_python(python: str) -> Dict[str, Any]:
+    """Detect a specific Python interpreter by running it."""
+    out, rc = run_cmd([python, "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"],
+                      combine_stderr=False)
+    info = {"found": True, "version": out, "path": python, "real_path": os.path.realpath(python)}
+    if rc != 0 or not out:
+        info["version"] = "unknown"
+        info["reason"] = "running {} to read its version failed".format(python)
+    return info
+
+
+def detect(python: str = None) -> Dict[str, Any]:
+    """Detect all supported language runtimes.
+
+    Args:
+        python: Interpreter to report (e.g. the --env environment's). If
+            None, reports python3 on PATH with the running version.
+    """
     languages = {}
 
-    # Python — use the current interpreter's version for accuracy
-    python_paths = resolve_path("python3")
-    languages["python"] = {
-        "found": True,
-        "version": "{}.{}.{}".format(*sys.version_info[:3]),
-        "path": python_paths["path"] or sys.executable,
-        "real_path": python_paths["real_path"] or os.path.realpath(sys.executable),
-    }
+    if python:
+        languages["python"] = detect_python(python)
+    else:
+        # Python — use the current interpreter's version for accuracy
+        python_paths = resolve_path("python3")
+        languages["python"] = {
+            "found": True,
+            "version": "{}.{}.{}".format(*sys.version_info[:3]),
+            "path": python_paths["path"] or sys.executable,
+            "real_path": python_paths["real_path"] or os.path.realpath(sys.executable),
+        }
 
     # R
     languages["R"] = detect_binary("R", ["R", "--version"], r"R version ([\d.]+)")

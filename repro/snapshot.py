@@ -67,7 +67,7 @@ def run_snapshot(
 
     steps = [
         ("System", lambda: system.detect()),
-        ("Languages", lambda: languages.detect()),
+        ("Languages", lambda: _detect_languages(env_ctx)),
         ("Conda/Mamba", lambda: conda.detect(all_envs=all_envs, env_name=env_name)),
         ("Virtual environments", lambda: virtualenv.detect()),
         ("Packages", lambda: _detect_packages(env_ctx)),
@@ -180,6 +180,26 @@ def _resolve_env(env_name: Optional[str]) -> Optional[dict]:
     return {"name": env_name, "prefix": prefix, "python": python}
 
 
+def _detect_languages(env_ctx: Optional[dict]) -> dict:
+    """Language detection, reporting the --env environment's Python."""
+    if env_ctx is None:
+        return languages.detect()
+    result = languages.detect(python=env_ctx["python"])
+    if not env_ctx["python"]:
+        # Never report the PATH python: it belongs to another environment.
+        result["python"] = {
+            "found": False, "version": None, "path": None, "real_path": None,
+            "reason": _no_python_reason(env_ctx),
+        }
+    return result
+
+
+def _no_python_reason(env_ctx: dict) -> str:
+    if env_ctx["prefix"]:
+        return "no Python interpreter at {}/bin/python".format(env_ctx["prefix"])
+    return "conda environment '{}' not found".format(env_ctx["name"])
+
+
 def _detect_packages(env_ctx: Optional[dict]) -> dict:
     """Package detection, scoped to the --env environment's interpreter."""
     if env_ctx is None:
@@ -195,11 +215,8 @@ def _detect_packages(env_ctx: Optional[dict]) -> dict:
     else:
         # Never fall back to the pip on PATH: it belongs to another environment.
         result["pip"] = {}
-        if env_ctx["prefix"]:
-            reason = "no Python interpreter at {}/bin/python".format(env_ctx["prefix"])
-        else:
-            reason = "conda environment '{}' not found".format(env_ctx["name"])
-        result["pip_source"] = {"python": None, "status": "unknown", "reason": reason}
+        result["pip_source"] = {"python": None, "status": "unknown",
+                                "reason": _no_python_reason(env_ctx)}
     return result
 
 
