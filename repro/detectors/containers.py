@@ -33,17 +33,21 @@ def _detect_current_image() -> Optional[str]:
     return None
 
 
-def detect() -> Dict[str, Any]:
+def detect(search_paths: list = None) -> Dict[str, Any]:
     """Detect all container runtimes.
 
     Returns a dict with each runtime's status. Missing runtimes
     get a clean {found: false} entry — never crashes.
+
+    Args:
+        search_paths: Additional directories to search for runtimes.
     """
+    extra = search_paths or []
     runtimes = {
-        "docker": detect_binary("docker", ["docker", "--version"], r"Docker version ([\d.]+)"),
-        "singularity": detect_binary("singularity", ["singularity", "--version"], r"([\d.]+)"),
-        "apptainer": detect_binary("apptainer", ["apptainer", "--version"], r"([\d.]+)"),
-        "podman": detect_binary("podman", ["podman", "--version"], r"version ([\d.]+)"),
+        "docker": detect_binary("docker", ["docker", "--version"], r"Docker version ([\d.]+)", extra),
+        "singularity": detect_binary("singularity", ["singularity", "--version"], r"([\d.]+)", extra),
+        "apptainer": detect_binary("apptainer", ["apptainer", "--version"], r"([\d.]+)", extra),
+        "podman": detect_binary("podman", ["podman", "--version"], r"version ([\d.]+)", extra),
     }
 
     # Find the preferred / active runtime

@@ -91,6 +91,9 @@ def detect_binary(binary: str, version_cmd: list, version_regex: str = None,
 
     real_path = os.path.realpath(path)
 
+    # Run the binary that was found, which may not be the one on PATH
+    if version_cmd and version_cmd[0] == binary:
+        version_cmd = [path] + list(version_cmd[1:])
     out, _ = run_cmd(version_cmd)
     version = out
     if version_regex and out:

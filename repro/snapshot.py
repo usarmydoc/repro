@@ -72,7 +72,7 @@ def run_snapshot(
         ("Virtual environments", lambda: virtualenv.detect()),
         ("Packages", lambda: _detect_packages(env_ctx)),
         ("CLI tools", lambda: tools.detect(search_paths=search_paths)),
-        ("Containers", lambda: containers.detect()),
+        ("Containers", lambda: containers.detect(search_paths=_container_paths(env_ctx, search_paths))),
         ("GPU/CUDA", lambda: gpu.detect()),
         ("Galaxy workflows", lambda: galaxy.detect()),
         ("Pipeline type", lambda: pipeline.detect()),
@@ -178,6 +178,14 @@ def _resolve_env(env_name: Optional[str]) -> Optional[dict]:
         if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
             python = candidate
     return {"name": env_name, "prefix": prefix, "python": python}
+
+
+def _container_paths(env_ctx: Optional[dict], search_paths: Optional[list]) -> list:
+    """--search-paths, plus the --env environment's bin directory."""
+    paths = list(search_paths or [])
+    if env_ctx and env_ctx["prefix"]:
+        paths.append(os.path.join(env_ctx["prefix"], "bin"))
+    return paths
 
 
 def _detect_languages(env_ctx: Optional[dict]) -> dict:
